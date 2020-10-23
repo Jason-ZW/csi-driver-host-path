@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/kubernetes/pkg/util/mount"
+	"k8s.io/kubernetes/pkg/util/resizefs"
 	"k8s.io/kubernetes/pkg/volume/util/volumepathhandler"
 )
 
@@ -35,6 +36,7 @@ const TopologyKeyNode = "topology.hostpath.csi/node"
 
 type nodeServer struct {
 	nodeID            string
+	mounter           Mounter
 	ephemeral         bool
 	maxVolumesPerNode int64
 }
@@ -42,6 +44,7 @@ type nodeServer struct {
 func NewNodeServer(nodeId string, ephemeral bool, maxVolumesPerNode int64) *nodeServer {
 	return &nodeServer{
 		nodeID:            nodeId,
+		mounter:           newNodeMounter(),
 		ephemeral:         ephemeral,
 		maxVolumesPerNode: maxVolumesPerNode,
 	}
@@ -326,6 +329,17 @@ func (ns *nodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandV
 		return nil, status.Errorf(codes.InvalidArgument, "Could not get file information from %s: %v", volPath, err)
 	}
 
+	args := []string{"-o", "source", "--noheadings", "--target", volPath}
+	output, err := ns.mounter.Command("findmnt", args...).Output()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Could not determine device path: %v", err)
+	}
+
+	devicePath := strings.TrimSpace(string(output))
+	if len(devicePath) == 0 {
+		return nil, status.Errorf(codes.Internal, "Could not get valid device for mount path: %q", req.GetVolumePath())
+	}
+
 	switch m := info.Mode(); {
 	case m.IsDir():
 		if vol.VolAccessType != mountAccess {
@@ -337,6 +351,16 @@ func (ns *nodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandV
 		}
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "Volume %s is invalid", volID)
+	}
+
+	r := resizefs.NewResizeFs(&mount.SafeFormatAndMount{
+		Interface: mount.New(""),
+		Exec:      mount.NewOsExec(),
+	})
+
+	// TODO: lock per volume ID to have some idempotency
+	if _, err := r.Resize(devicePath, volPath); err != nil {
+		return nil, status.Errorf(codes.Internal, "Could not resize volume %q (%q):  %v", volID, volPath, err)
 	}
 
 	return &csi.NodeExpandVolumeResponse{}, nil
