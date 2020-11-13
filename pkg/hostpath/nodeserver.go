@@ -28,7 +28,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/kubernetes/pkg/util/mount"
-	"k8s.io/kubernetes/pkg/util/resizefs"
 	"k8s.io/kubernetes/pkg/volume/util/volumepathhandler"
 )
 
@@ -240,30 +239,30 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
 
 	// Check arguments
-	if len(req.GetVolumeId()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
-	}
-	if len(req.GetStagingTargetPath()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
-	}
-	if req.GetVolumeCapability() == nil {
-		return nil, status.Error(codes.InvalidArgument, "Volume Capability missing in request")
-	}
+	//if len(req.GetVolumeId()) == 0 {
+	//	return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
+	//}
+	//if len(req.GetStagingTargetPath()) == 0 {
+	//	return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
+	//}
+	//if req.GetVolumeCapability() == nil {
+	//	return nil, status.Error(codes.InvalidArgument, "Volume Capability missing in request")
+	//}
 
-	return &csi.NodeStageVolumeResponse{}, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
 
 	// Check arguments
-	if len(req.GetVolumeId()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
-	}
-	if len(req.GetStagingTargetPath()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
-	}
+	//if len(req.GetVolumeId()) == 0 {
+	//	return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
+	//}
+	//if len(req.GetStagingTargetPath()) == 0 {
+	//	return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
+	//}
 
-	return &csi.NodeUnstageVolumeResponse{}, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 func (ns *nodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
@@ -283,13 +282,13 @@ func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetC
 
 	return &csi.NodeGetCapabilitiesResponse{
 		Capabilities: []*csi.NodeServiceCapability{
-			{
-				Type: &csi.NodeServiceCapability_Rpc{
-					Rpc: &csi.NodeServiceCapability_RPC{
-						Type: csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME,
-					},
-				},
-			},
+			//{
+			//	Type: &csi.NodeServiceCapability_Rpc{
+			//		Rpc: &csi.NodeServiceCapability_RPC{
+			//			Type: csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME,
+			//		},
+			//	},
+			//},
 			{
 				Type: &csi.NodeServiceCapability_Rpc{
 					Rpc: &csi.NodeServiceCapability_RPC{
@@ -308,60 +307,61 @@ func (ns *nodeServer) NodeGetVolumeStats(ctx context.Context, in *csi.NodeGetVol
 // NodeExpandVolume is only implemented so the driver can be used for e2e testing.
 func (ns *nodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
 
-	volID := req.GetVolumeId()
-	if len(volID) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Volume ID not provided")
-	}
+	//volID := req.GetVolumeId()
+	//if len(volID) == 0 {
+	//	return nil, status.Error(codes.InvalidArgument, "Volume ID not provided")
+	//}
+	//
+	//vol, err := getVolumeByID(volID)
+	//if err != nil {
+	//	// Assume not found error
+	//	return nil, status.Errorf(codes.NotFound, "Could not get volume %s: %v", volID, err)
+	//}
+	//
+	//volPath := req.GetVolumePath()
+	//if len(volPath) == 0 {
+	//	return nil, status.Error(codes.InvalidArgument, "Volume path not provided")
+	//}
+	//
+	//info, err := os.Stat(volPath)
+	//if err != nil {
+	//	return nil, status.Errorf(codes.InvalidArgument, "Could not get file information from %s: %v", volPath, err)
+	//}
+	//
+	//args := []string{"-o", "source", "--noheadings", "--target", volPath}
+	//output, err := ns.mounter.Command("findmnt", args...).Output()
+	//if err != nil {
+	//	return nil, status.Errorf(codes.Internal, "Could not determine device path: %v", err)
+	//}
+	//
+	//devicePath := strings.TrimSpace(string(output))
+	//if len(devicePath) == 0 {
+	//	return nil, status.Errorf(codes.Internal, "Could not get valid device for mount path: %q", req.GetVolumePath())
+	//}
+	//
+	//switch m := info.Mode(); {
+	//case m.IsDir():
+	//	if vol.VolAccessType != mountAccess {
+	//		return nil, status.Errorf(codes.InvalidArgument, "Volume %s is not a directory", volID)
+	//	}
+	//case m&os.ModeDevice != 0:
+	//	if vol.VolAccessType != blockAccess {
+	//		return nil, status.Errorf(codes.InvalidArgument, "Volume %s is not a block device", volID)
+	//	}
+	//default:
+	//	return nil, status.Errorf(codes.InvalidArgument, "Volume %s is invalid", volID)
+	//}
+	//
+	//r := resizefs.NewResizeFs(&mount.SafeFormatAndMount{
+	//	Interface: mount.New(""),
+	//	Exec:      mount.NewOsExec(),
+	//})
+	//
+	//// TODO: lock per volume ID to have some idempotency
+	//if _, err := r.Resize(devicePath, volPath); err != nil {
+	//	return nil, status.Errorf(codes.Internal, "Could not resize volume %q (%q):  %v", volID, volPath, err)
+	//}
 
-	vol, err := getVolumeByID(volID)
-	if err != nil {
-		// Assume not found error
-		return nil, status.Errorf(codes.NotFound, "Could not get volume %s: %v", volID, err)
-	}
-
-	volPath := req.GetVolumePath()
-	if len(volPath) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Volume path not provided")
-	}
-
-	info, err := os.Stat(volPath)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Could not get file information from %s: %v", volPath, err)
-	}
-
-	args := []string{"-o", "source", "--noheadings", "--target", volPath}
-	output, err := ns.mounter.Command("findmnt", args...).Output()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Could not determine device path: %v", err)
-	}
-
-	devicePath := strings.TrimSpace(string(output))
-	if len(devicePath) == 0 {
-		return nil, status.Errorf(codes.Internal, "Could not get valid device for mount path: %q", req.GetVolumePath())
-	}
-
-	switch m := info.Mode(); {
-	case m.IsDir():
-		if vol.VolAccessType != mountAccess {
-			return nil, status.Errorf(codes.InvalidArgument, "Volume %s is not a directory", volID)
-		}
-	case m&os.ModeDevice != 0:
-		if vol.VolAccessType != blockAccess {
-			return nil, status.Errorf(codes.InvalidArgument, "Volume %s is not a block device", volID)
-		}
-	default:
-		return nil, status.Errorf(codes.InvalidArgument, "Volume %s is invalid", volID)
-	}
-
-	r := resizefs.NewResizeFs(&mount.SafeFormatAndMount{
-		Interface: mount.New(""),
-		Exec:      mount.NewOsExec(),
-	})
-
-	// TODO: lock per volume ID to have some idempotency
-	if _, err := r.Resize(devicePath, volPath); err != nil {
-		return nil, status.Errorf(codes.Internal, "Could not resize volume %q (%q):  %v", volID, volPath, err)
-	}
-
-	return &csi.NodeExpandVolumeResponse{}, nil
+	//return &csi.NodeExpandVolumeResponse{}, nil
+	return nil, status.Errorf(codes.Unimplemented, "")
 }
